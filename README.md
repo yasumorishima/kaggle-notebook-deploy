@@ -37,7 +37,13 @@ gh secret set KAGGLE_USERNAME
 gh secret set KAGGLE_KEY
 ```
 
-### 3. Create a competition directory
+### 3. Accept competition rules on Kaggle
+
+> **Required before your notebook can access competition data.**
+> Open the competition page on Kaggle and click **"Join Competition"** to accept the rules.
+> Without this step, `competition_sources` data will not be mounted and you will get a `FileNotFoundError`.
+
+### 4. Create a competition directory
 
 ```bash
 # Basic
@@ -51,7 +57,7 @@ Generated files:
 - `<slug>/kernel-metadata.json` — Kaggle kernel metadata
 - `<slug>/<slug>-baseline.ipynb` — baseline notebook
 
-### 4. Develop and deploy
+### 5. Develop and deploy
 
 ```bash
 # Edit the notebook

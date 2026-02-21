@@ -45,7 +45,16 @@ echo '{"username":"your-username","key":"your-api-key"}' > ~/.kaggle/kaggle.json
 chmod 600 ~/.kaggle/kaggle.json
 ```
 
-### Step 3: Initialize the repository
+### Step 3: Accept competition rules on Kaggle
+
+> **Required before your notebook can access competition data.**
+>
+> Open the competition page (e.g., `https://www.kaggle.com/competitions/titanic`) and click **"Join Competition"** to accept the rules.
+> Without this, `competition_sources` data will **not** be mounted inside the notebook — you will get a `FileNotFoundError` even if your notebook is correctly configured.
+>
+> This is a one-time step per competition per account.
+
+### Step 4: Initialize the repository
 
 ```bash
 # Create a new repo (or use an existing one)
@@ -66,7 +75,7 @@ my-kaggle/
 └── .gitignore                   # Excludes data files etc.
 ```
 
-### Step 4: Set GitHub Secrets
+### Step 5: Set GitHub Secrets
 
 After pushing to GitHub, register your Kaggle credentials in the repository Secrets.
 
