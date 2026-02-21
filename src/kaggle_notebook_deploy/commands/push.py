@@ -51,7 +51,31 @@ def push(directory, skip_validate, dry_run):
     click.echo(f"  GPU:    {metadata['enable_gpu']}")
     click.echo(f"  Private: {metadata['is_private']}")
 
-    cmd = ["kaggle", "kernels", "push", "-p", str(dir_path)]
+    import shutil
+    import sysconfig
+
+    def _find_kaggle():
+        for name in ("kaggle", "kaggle.exe"):
+            if found := shutil.which(name):
+                return found
+        for scheme in ("nt_user", "posix_user", None):
+            try:
+                scripts = Path(sysconfig.get_path("scripts", scheme) or "")
+            except KeyError:
+                continue
+            for name in ("kaggle.exe", "kaggle"):
+                candidate = scripts / name
+                if candidate.exists():
+                    return str(candidate)
+        return None
+
+    kaggle_cmd = _find_kaggle()
+    if kaggle_cmd:
+        cmd = [kaggle_cmd, "kernels", "push", "-p", str(dir_path)]
+    else:
+        click.echo("Error: kaggle コマンドが見つかりません。", err=True)
+        click.echo("  pip install kaggle でインストールしてください。", err=True)
+        raise SystemExit(1)
 
     if dry_run:
         click.echo("")
