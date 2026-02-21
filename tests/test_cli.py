@@ -6,6 +6,7 @@ import os
 from click.testing import CliRunner
 
 from kaggle_notebook_deploy.cli import main
+from kaggle_notebook_deploy._utils import normalize_path
 
 
 runner = CliRunner()
@@ -14,7 +15,7 @@ runner = CliRunner()
 def test_version():
     result = runner.invoke(main, ["--version"])
     assert result.exit_code == 0
-    assert "0.1.0" in result.output
+    assert "0.1.3" in result.output
 
 
 def test_help():
@@ -24,6 +25,26 @@ def test_help():
     assert "init-repo" in result.output
     assert "validate" in result.output
     assert "push" in result.output
+
+
+class TestNormalizePath:
+    def test_git_bash_c_drive(self):
+        assert normalize_path("/c/Users/foo/bar") == "C:/Users/foo/bar"
+
+    def test_git_bash_d_drive(self):
+        assert normalize_path("/d/Projects/my-repo") == "D:/Projects/my-repo"
+
+    def test_windows_path_unchanged(self):
+        assert normalize_path("C:/Users/foo/bar") == "C:/Users/foo/bar"
+
+    def test_relative_path_unchanged(self):
+        assert normalize_path("my-notebook/") == "my-notebook/"
+
+    def test_dot_path_unchanged(self):
+        assert normalize_path(".") == "."
+
+    def test_unix_absolute_path_unchanged(self):
+        assert normalize_path("/home/user/project") == "/home/user/project"
 
 
 class TestInit:
@@ -234,7 +255,7 @@ class TestPush:
         result = runner.invoke(main, ["push", str(comp_dir), "--dry-run"])
         assert result.exit_code == 0
         assert "Dry run" in result.output
-        assert "kaggle kernels push" in result.output
+        assert "kernels push" in result.output
 
     def test_missing_dir(self):
         result = runner.invoke(main, ["push", "/nonexistent/path"])

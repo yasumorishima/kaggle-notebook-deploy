@@ -5,6 +5,8 @@ from pathlib import Path
 
 import click
 
+from kaggle_notebook_deploy._utils import normalize_path
+
 
 REQUIRED_FIELDS = [
     "id",
@@ -30,7 +32,7 @@ def validate(directory):
 
     DIRECTORY はkernel-metadata.jsonを含むディレクトリです（デフォルト: カレントディレクトリ）。
     """
-    dir_path = Path(directory)
+    dir_path = Path(normalize_path(directory))
     metadata_path = dir_path / "kernel-metadata.json"
 
     if not metadata_path.exists():

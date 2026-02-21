@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kaggle-notebook-deploy"
-version = "0.1.2"
+version = "0.1.3"
 description = "A CLI tool to deploy Kaggle Notebooks with git push via GitHub Actions"
 readme = "README.md"
 license = "MIT"

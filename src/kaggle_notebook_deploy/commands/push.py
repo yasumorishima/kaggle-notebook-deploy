@@ -7,6 +7,8 @@ from pathlib import Path
 
 import click
 
+from kaggle_notebook_deploy._utils import normalize_path
+
 
 @click.command()
 @click.argument("directory", default=".")
@@ -20,7 +22,7 @@ def push(directory, skip_validate, dry_run):
     内部で `kaggle kernels push -p <directory>` を実行します。
     事前に `kaggle` CLIのインストールと認証情報の設定が必要です。
     """
-    dir_path = Path(directory)
+    dir_path = Path(normalize_path(directory))
     metadata_path = dir_path / "kernel-metadata.json"
 
     if not metadata_path.exists():
