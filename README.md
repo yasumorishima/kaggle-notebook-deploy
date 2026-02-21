@@ -37,13 +37,7 @@ gh secret set KAGGLE_USERNAME
 gh secret set KAGGLE_KEY
 ```
 
-### 3. Accept competition rules on Kaggle
-
-> **Required before your notebook can access competition data.**
-> Open the competition page on Kaggle and click **"Join Competition"** to accept the rules.
-> Without this step, `competition_sources` data will not be mounted and you will get a `FileNotFoundError`.
-
-### 4. Create a competition directory
+### 3. Create a competition directory
 
 ```bash
 # Basic
@@ -57,7 +51,7 @@ Generated files:
 - `<slug>/kernel-metadata.json` — Kaggle kernel metadata
 - `<slug>/<slug>-baseline.ipynb` — baseline notebook
 
-### 5. Develop and deploy
+### 4. Develop and deploy
 
 ```bash
 # Edit the notebook
@@ -130,6 +124,37 @@ Push a notebook to Kaggle (internally runs `kaggle kernels push`).
 |---|---|
 | `competition_sources` | `/kaggle/input/competitions/<slug>/` |
 | `dataset_sources` | `/kaggle/input/<slug>/` |
+
+Note that `competition_sources` data is mounted under **`competitions/`** subdirectory, not directly under `/kaggle/input/`. Hardcoding `/kaggle/input/<slug>/` will cause `FileNotFoundError`.
+
+**Recommended pattern** — auto-detect the data directory in your notebook:
+
+```python
+from pathlib import Path
+
+INPUT_ROOT = Path('/kaggle/input')
+# Find actual data location instead of hardcoding the path
+DATA_DIR = None
+for p in INPUT_ROOT.rglob('your-expected-file.csv'):
+    DATA_DIR = p.parent
+    break
+
+if DATA_DIR is None:
+    # Print structure for debugging
+    for p in sorted(INPUT_ROOT.iterdir()):
+        print(f'  {p.name}/')
+        for sub in sorted(p.iterdir())[:5]:
+            print(f'    {sub.name}')
+    raise FileNotFoundError('Data directory not found.')
+```
+
+### NaN handling for missing feature columns
+
+When building features, some columns may be entirely `NaN` (e.g., a ranking system not available for Women's tournaments). `fillna(median)` does not help when the median itself is `NaN`. Always chain a fallback:
+
+```python
+X = df[feat_cols].fillna(df[feat_cols].median()).fillna(0)
+```
 
 ## License
 

@@ -45,16 +45,7 @@ echo '{"username":"your-username","key":"your-api-key"}' > ~/.kaggle/kaggle.json
 chmod 600 ~/.kaggle/kaggle.json
 ```
 
-### Step 3: Accept competition rules on Kaggle
-
-> **Required before your notebook can access competition data.**
->
-> Open the competition page (e.g., `https://www.kaggle.com/competitions/titanic`) and click **"Join Competition"** to accept the rules.
-> Without this, `competition_sources` data will **not** be mounted inside the notebook — you will get a `FileNotFoundError` even if your notebook is correctly configured.
->
-> This is a one-time step per competition per account.
-
-### Step 4: Initialize the repository
+### Step 3: Initialize the repository
 
 ```bash
 # Create a new repo (or use an existing one)
@@ -75,7 +66,7 @@ my-kaggle/
 └── .gitignore                   # Excludes data files etc.
 ```
 
-### Step 5: Set GitHub Secrets
+### Step 4: Set GitHub Secrets
 
 After pushing to GitHub, register your Kaggle credentials in the repository Secrets.
 
@@ -206,23 +197,49 @@ In code competitions, internet access is disabled in submitted notebooks. If `en
 
 `kaggle-notebook-deploy init` sets this to `false` by default, so you're safe as long as you don't use the `--internet` flag.
 
-### 2. Data path gotcha
+### 2. Data path — never hardcode, always auto-detect
 
 | Source type | `kernel-metadata.json` key | Mount path |
 |---|---|---|
 | Competition data | `competition_sources` | `/kaggle/input/competitions/<slug>/` |
 | Dataset | `dataset_sources` | `/kaggle/input/<slug>/` |
 
-**`competition_sources` includes a `competitions/` subdirectory.** This is a common source of confusion.
+**`competition_sources` data is mounted under a `competitions/` subdirectory**, so the path is `/kaggle/input/competitions/<slug>/`, not `/kaggle/input/<slug>/`. Hardcoding the wrong path causes `FileNotFoundError` regardless of whether you have joined the competition.
 
-To debug paths inside a notebook:
+**Always use path auto-detection in your notebooks:**
 
 ```python
 from pathlib import Path
-for item in sorted(Path('/kaggle/input').iterdir()):
-    print(f'  {item.name}/')
-    for sub in sorted(item.iterdir()):
-        print(f'    {sub.name} ({sub.stat().st_size:,} bytes)')
+
+INPUT_ROOT = Path('/kaggle/input')
+DATA_DIR = None
+for p in INPUT_ROOT.rglob('your-expected-file.csv'):
+    DATA_DIR = p.parent
+    break
+
+if DATA_DIR is None:
+    # Print full structure for debugging
+    for item in sorted(INPUT_ROOT.iterdir()):
+        print(f'  {item.name}/')
+        for sub in sorted(item.iterdir())[:5]:
+            print(f'    {sub.name}')
+    raise FileNotFoundError('Data directory not found. See structure above.')
+
+print(f'DATA_DIR: {DATA_DIR}')
+```
+
+### 2b. NaN handling for missing feature columns
+
+When building ML features, some columns may be entirely `NaN` (e.g., a ranking system not available for Women's data, or a feature unavailable for certain seasons). `fillna(median)` has no effect when the median itself is `NaN`.
+
+Always chain a fallback fill:
+
+```python
+# Wrong: if all values are NaN, median is NaN and fillna does nothing
+X = df[feat_cols].fillna(df[feat_cols].median()).values
+
+# Correct: fallback to 0 for all-NaN columns
+X = df[feat_cols].fillna(df[feat_cols].median()).fillna(0).values
 ```
 
 ### 3. API-based submit is not available
