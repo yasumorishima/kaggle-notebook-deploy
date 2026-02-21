@@ -1,130 +1,130 @@
 # kaggle-notebook-deploy
 
-`git push` するだけで Kaggle Notebook をデプロイする CLI ツール。
+A CLI tool to deploy Kaggle Notebooks by simply running `git push`.
 
-Kaggle Notebook のコード管理を GitHub に集約し、GitHub Actions 経由で自動デプロイするワークフローをセットアップします。
+Manage your Kaggle Notebook code on GitHub and set up an automated deployment workflow via GitHub Actions.
 
-## ワークフロー
+## Workflow
 
 ```
-ノートブック編集 → git push → GitHub Actions → Kaggle にアップロード → ブラウザで Submit
+Edit notebook → git push → GitHub Actions → Upload to Kaggle → Submit in browser
 ```
 
-## インストール
+## Installation
 
 ```bash
 pip install kaggle-notebook-deploy
 ```
 
-## クイックスタート
+## Quick Start
 
-### 1. リポジトリのセットアップ
+### 1. Set up repository
 
 ```bash
-# GitHub Actions ワークフローと .gitignore を生成
+# Generate GitHub Actions workflow and .gitignore
 kaggle-notebook-deploy init-repo
 ```
 
-生成されるファイル:
-- `.github/workflows/kaggle-push.yml` - Kaggle プッシュ用ワークフロー
-- `scripts/setup-credentials.sh` - 認証情報セットアップスクリプト
-- `.gitignore` への Kaggle 関連パターン追記
+Generated files:
+- `.github/workflows/kaggle-push.yml` — workflow for pushing to Kaggle
+- `scripts/setup-credentials.sh` — credential setup script
+- `.gitignore` entries for Kaggle-related files
 
-### 2. GitHub Secrets の設定
+### 2. Set GitHub Secrets
 
 ```bash
 gh secret set KAGGLE_USERNAME
 gh secret set KAGGLE_KEY
 ```
 
-### 3. コンペ用ディレクトリの作成
+### 3. Create a competition directory
 
 ```bash
-# 基本
+# Basic
 kaggle-notebook-deploy init titanic
 
-# GPU有効・公開Notebook
-kaggle-notebook-deploy init deep-past-initiative-machine-translation --gpu --public
+# GPU-enabled, public notebook
+kaggle-notebook-deploy init march-machine-learning-mania-2026 --gpu --public
 ```
 
-生成されるファイル:
-- `<slug>/kernel-metadata.json` - Kaggle カーネルメタデータ
-- `<slug>/<slug>-baseline.ipynb` - ベースライン Notebook
+Generated files:
+- `<slug>/kernel-metadata.json` — Kaggle kernel metadata
+- `<slug>/<slug>-baseline.ipynb` — baseline notebook
 
-### 4. 開発・デプロイ
+### 4. Develop and deploy
 
 ```bash
-# Notebook を編集
+# Edit the notebook
 vim titanic/titanic-baseline.ipynb
 
-# バリデーション
+# Validate
 kaggle-notebook-deploy validate titanic
 
-# ローカルからプッシュ
+# Push directly from local
 kaggle-notebook-deploy push titanic
 
-# または GitHub Actions 経由
+# Or via GitHub Actions
 git add titanic/ && git commit -m "Add titanic baseline" && git push
 gh workflow run kaggle-push.yml -f notebook_dir=titanic
 ```
 
-## コマンド一覧
+## Commands
 
 ### `kaggle-notebook-deploy init <competition-slug>`
 
-コンペ用ディレクトリを雛形から生成します。
+Generate a competition directory from a template.
 
-| オプション | 説明 |
+| Option | Description |
 |---|---|
-| `-u, --username` | Kaggle ユーザー名（省略時は ~/.kaggle/kaggle.json から取得） |
-| `-t, --title` | Notebook タイトル（省略時はスラッグから自動生成） |
-| `--gpu` | GPU 有効化 |
-| `--internet` | インターネット有効化（コードコンペでは非推奨） |
-| `--public` | 公開 Notebook として作成 |
+| `-u, --username` | Kaggle username (default: read from `~/.kaggle/kaggle.json`) |
+| `-t, --title` | Notebook title (default: auto-generated from slug) |
+| `--gpu` | Enable GPU |
+| `--internet` | Enable internet (not recommended for code competitions) |
+| `--public` | Create as public notebook |
 
 ### `kaggle-notebook-deploy init-repo`
 
-GitHub Actions ワークフローと関連ファイルをセットアップします。
+Set up GitHub Actions workflow and related files.
 
-| オプション | 説明 |
+| Option | Description |
 |---|---|
-| `-f, --force` | 既存ファイルを上書き |
+| `-f, --force` | Overwrite existing files |
 
 ### `kaggle-notebook-deploy validate [directory]`
 
-`kernel-metadata.json` のバリデーションを行います。
+Validate `kernel-metadata.json`.
 
-チェック項目:
-- 必須フィールドの存在
-- `id` のフォーマット（`username/slug`）
-- `code_file` の存在
-- `language`, `kernel_type` の有効値
-- `enable_internet` と `competition_sources` の整合性
+Checks:
+- Required fields exist
+- `id` format is `username/slug`
+- `code_file` exists on disk
+- Valid values for `language` and `kernel_type`
+- Consistency between `enable_internet` and `competition_sources`
 
 ### `kaggle-notebook-deploy push [directory]`
 
-Kaggle に Notebook をプッシュします（内部で `kaggle kernels push` を実行）。
+Push a notebook to Kaggle (internally runs `kaggle kernels push`).
 
-| オプション | 説明 |
+| Option | Description |
 |---|---|
-| `--skip-validate` | バリデーションをスキップ |
-| `--dry-run` | 実行せずにコマンドを表示 |
+| `--skip-validate` | Skip validation |
+| `--dry-run` | Print the command without executing |
 
-## 注意事項
+## Notes
 
-### コードコンペでの制約
+### Code competition constraints
 
-- `enable_internet: false` が必須（true だと提出不可）
-- API での Submit は制限あり（手動ブラウザ Submit が必要）
-- `kaggle kernels push` は Kaggle Secrets の紐付けをリセットするため、W&B 等を使う場合は Web UI で再設定が必要
+- `enable_internet: false` is required (setting it to `true` disables submission)
+- API-based submit is not available — browser submit is required
+- `kaggle kernels push` resets Kaggle Secrets bindings; re-attach W&B keys etc. via the web UI after each push
 
-### データパスの違い
+### Data path differences
 
-| ソース | マウントパス |
+| Source | Mount path |
 |---|---|
 | `competition_sources` | `/kaggle/input/competitions/<slug>/` |
 | `dataset_sources` | `/kaggle/input/<slug>/` |
 
-## ライセンス
+## License
 
 MIT
