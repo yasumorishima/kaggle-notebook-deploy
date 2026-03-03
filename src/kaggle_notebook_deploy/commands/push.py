@@ -7,14 +7,17 @@ from pathlib import Path
 
 import click
 
-from kaggle_notebook_deploy._utils import normalize_path
+import time
+
+from kaggle_notebook_deploy._utils import get_kernel_status, normalize_path, show_kernel_diagnostics
 
 
 @click.command()
 @click.argument("directory", default=".")
 @click.option("--skip-validate", is_flag=True, default=False, help="バリデーションをスキップ")
 @click.option("--dry-run", is_flag=True, default=False, help="実行せずにコマンドを表示")
-def push(directory, skip_validate, dry_run):
+@click.option("--wait", is_flag=True, default=False, help="Push後にカーネル完了を待機し、ERRORなら診断を表示")
+def push(directory, skip_validate, dry_run, wait):
     """KaggleにNotebookをプッシュする.
 
     DIRECTORY はkernel-metadata.jsonを含むディレクトリです（デフォルト: カレントディレクトリ）。
@@ -102,10 +105,29 @@ def push(directory, skip_validate, dry_run):
     if result.returncode != 0:
         raise SystemExit(result.returncode)
 
+    kernel_id = metadata["id"]
+
+    if wait:
+        click.echo("")
+        click.echo(f"Waiting for kernel to complete: {kernel_id}")
+        for i in range(40):
+            status = get_kernel_status(kaggle_cmd, kernel_id)
+            click.echo(f"  [{i + 1}/40] {status or '(unknown)'}")
+            upper = status.upper()
+            if "COMPLETE" in upper:
+                click.echo("Kernel completed successfully.")
+                break
+            if "ERROR" in upper or "CANCEL" in upper:
+                click.echo(f"\nKernel failed: {status}")
+                click.echo("\n=== Kernel diagnostics ===")
+                show_kernel_diagnostics(kaggle_cmd, kernel_id)
+                raise SystemExit(1)
+            time.sleep(30)
+        else:
+            click.echo("Timeout: kernel did not complete in 20 minutes.", err=True)
+            raise SystemExit(1)
+
     click.echo("")
     click.echo("次のステップ:")
     click.echo("  ブラウザでKaggle Notebook画面を開き「Submit to Competition」をクリック")
-
-    # ステータス確認コマンドの案内
-    kernel_id = metadata["id"]
     click.echo(f"  kaggle kernels status {kernel_id}")
