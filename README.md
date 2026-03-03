@@ -70,9 +70,11 @@ gh workflow run kaggle-push.yml -f notebook_dir=titanic
 
 ## Commands
 
-### `kaggle-notebook-deploy init <competition-slug>`
+<!-- commands:start -->
 
-Generate a competition directory from a template.
+### `kaggle-notebook-deploy init`
+
+[COMPETITION_SLUG] [OPTIONS]
 
 | Option | Description |
 |---|---|
@@ -90,18 +92,15 @@ Set up GitHub Actions workflow and related files.
 |---|---|
 | `-f, --force` | Overwrite existing files |
 
-### `kaggle-notebook-deploy validate [directory]`
+### `kaggle-notebook-deploy validate`
 
 Validate `kernel-metadata.json`.
 
-Checks:
-- Required fields exist
-- `id` format is `username/slug`
-- `code_file` exists on disk
-- Valid values for `language` and `kernel_type`
-- Consistency between `enable_internet` and `competition_sources`
+| Option | Description |
+|---|---|
+| `--directory` | Directory containing kernel-metadata.json (default: `.`) |
 
-### `kaggle-notebook-deploy push [directory]`
+### `kaggle-notebook-deploy push`
 
 Push a notebook to Kaggle (internally runs `kaggle kernels push`).
 
@@ -109,6 +108,9 @@ Push a notebook to Kaggle (internally runs `kaggle kernels push`).
 |---|---|
 | `--skip-validate` | Skip validation |
 | `--dry-run` | Print the command without executing |
+| `--wait` | Poll after push until kernel completes; on ERROR prints kernel diagnostics automatically |
+
+<!-- commands:end -->
 
 ## Notes
 

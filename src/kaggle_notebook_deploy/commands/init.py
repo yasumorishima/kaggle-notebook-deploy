@@ -41,12 +41,16 @@ NOTEBOOK_TEMPLATE = Template("""{
    "metadata": {},
    "outputs": [],
    "source": [
+    "import glob as _glob\\n",
     "import pandas as pd\\n",
     "import numpy as np\\n",
+    "from pathlib import Path\\n",
     "\\n",
-    "# データの読み込み\\n",
-    "# コンペデータ: /kaggle/input/competitions/<slug>/\\n",
-    "# データセット: /kaggle/input/<slug>/"
+    "# Auto-detect data directory (competition_sources mounts under /kaggle/input/competitions/)\\n",
+    "_slug = '$competition'\\n",
+    "_matches = _glob.glob(f'/kaggle/input/**/{_slug}', recursive=True)\\n",
+    "DATA_DIR = Path(_matches[0]) if _matches else Path(f'/kaggle/input/{_slug}')\\n",
+    "print(f'DATA_DIR: {DATA_DIR}')"
    ]
   }
  ],
