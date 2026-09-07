@@ -70,8 +70,6 @@ gh workflow run kaggle-push.yml -f notebook_dir=titanic
 
 ## Commands
 
-<!-- commands:start -->
-
 ### `kaggle-notebook-deploy init`
 
 [COMPETITION_SLUG] [OPTIONS]
@@ -109,8 +107,6 @@ Push a notebook to Kaggle (internally runs `kaggle kernels push`).
 | `--skip-validate` | Skip validation |
 | `--dry-run` | Print the command without executing |
 | `--wait` | Poll after push until kernel completes; on ERROR prints kernel diagnostics automatically |
-
-<!-- commands:end -->
 
 ## Notes
 
