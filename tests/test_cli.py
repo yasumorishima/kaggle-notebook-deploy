@@ -5,6 +5,7 @@ import os
 
 from click.testing import CliRunner
 
+from kaggle_notebook_deploy import __version__
 from kaggle_notebook_deploy.cli import main
 from kaggle_notebook_deploy._utils import normalize_path
 
@@ -15,7 +16,9 @@ runner = CliRunner()
 def test_version():
     result = runner.invoke(main, ["--version"])
     assert result.exit_code == 0
-    assert "0.1.3" in result.output
+    # Assert the package version, not a literal: a release bump must not
+    # require editing this test (and a stale literal hid a real drift).
+    assert __version__ in result.output
 
 
 def test_help():
